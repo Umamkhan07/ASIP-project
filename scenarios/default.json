@@ -1,0 +1,107 @@
+{
+  "name": "Orbital Starter Network",
+  "time_steps": 8,
+  "stations": [
+    {
+      "station_id": "AURORA",
+      "name": "Aurora Station",
+      "compute_capacity": 8,
+      "energy_capacity": 24,
+      "energy_remaining": 20,
+      "recharge_per_step": 3,
+      "energy_per_compute": 0.8,
+      "bandwidth": 8,
+      "latency_steps": 1,
+      "outage_steps": []
+    },
+    {
+      "station_id": "PULSAR",
+      "name": "Pulsar Station",
+      "compute_capacity": 6,
+      "energy_capacity": 18,
+      "energy_remaining": 16,
+      "recharge_per_step": 2,
+      "energy_per_compute": 0.5,
+      "bandwidth": 5,
+      "latency_steps": 2,
+      "outage_steps": [3]
+    },
+    {
+      "station_id": "COMET",
+      "name": "Comet Station",
+      "compute_capacity": 4,
+      "energy_capacity": 12,
+      "energy_remaining": 11,
+      "recharge_per_step": 1.5,
+      "energy_per_compute": 0.35,
+      "bandwidth": 3,
+      "latency_steps": 1,
+      "outage_steps": [5]
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "T-01",
+      "name": "Emergency weather scan",
+      "compute": 5,
+      "priority": 5,
+      "arrival_step": 0,
+      "data_size": 6,
+      "min_bandwidth": 3
+    },
+    {
+      "task_id": "T-02",
+      "name": "Navigation correction",
+      "compute": 3,
+      "priority": 4,
+      "arrival_step": 0,
+      "data_size": 2,
+      "min_bandwidth": 2
+    },
+    {
+      "task_id": "T-03",
+      "name": "Research image processing",
+      "compute": 6,
+      "priority": 2,
+      "arrival_step": 1,
+      "data_size": 10,
+      "min_bandwidth": 4
+    },
+    {
+      "task_id": "T-04",
+      "name": "Telemetry cleanup",
+      "compute": 2,
+      "priority": 1,
+      "arrival_step": 2,
+      "data_size": 1,
+      "min_bandwidth": 1
+    },
+    {
+      "task_id": "T-05",
+      "name": "Deep space signal analysis",
+      "compute": 4,
+      "priority": 3,
+      "arrival_step": 3,
+      "data_size": 12,
+      "min_bandwidth": 5
+    },
+    {
+      "task_id": "T-06",
+      "name": "Orbit prediction update",
+      "compute": 3,
+      "priority": 4,
+      "arrival_step": 4,
+      "data_size": 3,
+      "min_bandwidth": 2
+    },
+    {
+      "task_id": "T-07",
+      "name": "Routine sensor summary",
+      "compute": 2,
+      "priority": 1,
+      "arrival_step": 6,
+      "data_size": 2,
+      "min_bandwidth": 1
+    }
+  ]
+}
