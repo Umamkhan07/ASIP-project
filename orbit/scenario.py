@@ -60,7 +60,11 @@ def validate_scenario(scenario):
             raise ValueError(f"{station.name}: outage steps must be within the simulation")
 
     for task in scenario.tasks:
-        if task.compute <= 0 or task.data_size < 0 or task.min_bandwidth < 0:
+        if not task.task_type.strip():
+            raise ValueError(f"{task.name}: task_type cannot be empty")
+        if task.compute <= 0 or task.duration_steps < 1:
+            raise ValueError(f"{task.name}: compute and duration must be greater than zero")
+        if task.data_size < 0 or task.min_bandwidth < 0:
             raise ValueError(f"{task.name}: task resource values are invalid")
         if task.arrival_step < 0 or task.arrival_step >= scenario.time_steps:
             raise ValueError(f"{task.name}: arrival_step must be within the simulation")

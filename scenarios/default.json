@@ -1,6 +1,6 @@
 {
   "name": "Orbital Starter Network",
-  "time_steps": 8,
+  "time_steps": 16,
   "stations": [
     {
       "station_id": "AURORA",
@@ -42,18 +42,22 @@
   "tasks": [
     {
       "task_id": "T-01",
-      "name": "Emergency weather scan",
-      "compute": 5,
-      "priority": 5,
+      "name": "Satellite image generation",
+      "task_type": "image_generation",
+      "compute": 7,
+      "duration_steps": 4,
+      "priority": 2,
       "arrival_step": 0,
-      "data_size": 6,
-      "min_bandwidth": 3
+      "data_size": 2,
+      "min_bandwidth": 1
     },
     {
       "task_id": "T-02",
       "name": "Navigation correction",
+      "task_type": "navigation_correction",
       "compute": 3,
-      "priority": 4,
+      "duration_steps": 2,
+      "priority": 5,
       "arrival_step": 0,
       "data_size": 2,
       "min_bandwidth": 2
@@ -61,26 +65,32 @@
     {
       "task_id": "T-03",
       "name": "Research image processing",
+      "task_type": "image_analysis",
       "compute": 6,
-      "priority": 2,
+      "duration_steps": 3,
+      "priority": 3,
       "arrival_step": 1,
       "data_size": 10,
       "min_bandwidth": 4
     },
     {
       "task_id": "T-04",
-      "name": "Telemetry cleanup",
-      "compute": 2,
+      "name": "Weather record lookup",
+      "task_type": "weather_lookup",
+      "compute": 1,
+      "duration_steps": 1,
       "priority": 1,
       "arrival_step": 2,
-      "data_size": 1,
-      "min_bandwidth": 1
+      "data_size": 12,
+      "min_bandwidth": 5
     },
     {
       "task_id": "T-05",
       "name": "Deep space signal analysis",
+      "task_type": "signal_analysis",
       "compute": 4,
-      "priority": 3,
+      "duration_steps": 2,
+      "priority": 4,
       "arrival_step": 3,
       "data_size": 12,
       "min_bandwidth": 5
@@ -88,7 +98,9 @@
     {
       "task_id": "T-06",
       "name": "Orbit prediction update",
+      "task_type": "orbit_prediction",
       "compute": 3,
+      "duration_steps": 2,
       "priority": 4,
       "arrival_step": 4,
       "data_size": 3,
@@ -96,8 +108,10 @@
     },
     {
       "task_id": "T-07",
-      "name": "Routine sensor summary",
+      "name": "Telemetry cleanup",
+      "task_type": "telemetry_cleanup",
       "compute": 2,
+      "duration_steps": 1,
       "priority": 1,
       "arrival_step": 6,
       "data_size": 2,

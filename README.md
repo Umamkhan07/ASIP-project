@@ -1,19 +1,23 @@
 # ORBIT — Orbital Computing Resource Scheduler
 
-ORBIT is a Python simulation for experimenting with how a network of orbital computing stations handles incoming work. The project is designed to grow from understandable scheduling rules into a richer simulation of energy, communication, priorities, station outages, and eventually an interactive control center.
+ORBIT is a Python simulation for experimenting with how a network of orbital computing stations handles incoming work. It includes a terminal simulator and a browser-based control room for watching tasks move through simulation steps.
 
-> **Current status:** ORBIT now has a runnable multi-step command-line simulation. It reads a scenario from JSON, prioritizes tasks, checks station compute/energy/bandwidth limits, models scheduled station outages, and compares First Fit, Best Fit, and Energy Aware scheduling. The model uses simplified abstract units and is an educational simulator, not a physical satellite model.
+> **Current status:** ORBIT has a multi-step command-line simulator and a local browser dashboard. Tasks now have explicit types and different compute demands, data sizes, priorities, and run durations. Work can continue across steps, pause during outages or resource shortages, and complete later. Values remain simplified educational units, not a physical satellite model.
 
 ## What it can do now
 
 - Load stations, tasks, and simulation length from `scenarios/default.json`.
+- Represent workload types such as image generation, image analysis, weather lookup, navigation, and telemetry.
+- Give each task a compute demand per work step and a duration in work steps.
 - Add new tasks at different simulation steps and sort waiting work by priority.
 - Respect each station's compute capacity for each step, energy budget, and bandwidth requirement.
 - Recharge station energy between steps, up to the station's energy capacity.
 - Take stations offline at configured simulation steps.
+- Continue running tasks over multiple steps and pause them when a station is offline or lacks resources.
 - Estimate communication delay from station latency and task data size / station bandwidth.
 - Compare three scheduling rules against the same scenario.
 - Report assigned and unassigned tasks, energy use, outage steps, and estimated communication delay.
+- Show a visual orbital network with station resource meters, step events, and playback controls.
 
 The original small `orbit_day1.py` exercise remains available as a standalone introduction to First Fit and Best Fit. The package version is the main project from this point forward.
 
@@ -47,6 +51,14 @@ python -m orbit --scenario scenarios/default.json --algorithm compare
 
 There are no third-party dependencies. Run commands from the project root (the folder containing `README.md` and the `orbit` folder).
 
+To open the visual control room, run:
+
+```powershell
+python -m orbit --dashboard
+```
+
+ORBIT starts a local-only web server and opens the dashboard in your browser. Keep the terminal open while using it; press **Ctrl+C** there to stop the server. Use the scheduler menu to switch algorithms and the playback controls to move through the time steps. If port 8000 is already in use, try `python -m orbit --dashboard --port 8001`.
+
 ## Project structure
 
 ```text
@@ -56,16 +68,18 @@ orbit-project/
 ├── orbit/                     # Implemented simulator package
 │   ├── __init__.py            # Package version
 │   ├── __main__.py            # Command-line entry point (`python -m orbit`)
+│   ├── dashboard.py           # Local web server and simulation data endpoint
 │   ├── algorithms.py          # First Fit, Best Fit, and Energy Aware choices
-│   ├── models.py              # Task, Station, Scenario, Assignment, RunResult
+│   ├── models.py              # Tasks, stations, task progress, assignments, step snapshots
 │   ├── scenario.py            # JSON loading and input validation
-│   ├── simulation.py          # Time steps, arrivals, resources, outages, assignments
-│   └── report.py              # Comparison table and detailed run reports
+│   ├── simulation.py          # Task lifecycle, resource use, outages, assignments
+│   ├── report.py              # Comparison table and detailed run reports
+│   └── dashboard/
+│       └── index.html         # Browser control room
 ├── scenarios/
 │   └── default.json           # Demonstration network and task workload
-├── tests/                     # Planned: automated behavior checks
 ├── results/                   # Planned: saved experiment reports
-└── dashboard/                 # Planned: interactive visual control center
+└── tests/                     # Planned: automated behavior checks
 ```
 
 ## How the simulation works
@@ -74,10 +88,11 @@ orbit-project/
 2. **Start a simulation run.** The command-line entry point calls `run_simulation` once per selected algorithm. Each run gets its own copy of the input, so strategies start with identical station resources.
 3. **Advance through time steps.** At each step, newly arrived tasks join the waiting list. Tasks with a larger priority number are considered first.
 4. **Update station resources.** A station is marked offline if the current step is in its outage list. Online stations recharge energy and receive a fresh compute budget for the step.
-5. **Find eligible stations.** A task can be assigned only when a station is online, has enough compute and energy, and meets the task's minimum bandwidth.
-6. **Apply the scheduling rule.** The chosen algorithm selects one eligible station. The simulation subtracts the task's compute and energy costs and records the assignment.
-7. **Try waiting tasks again.** Tasks that could not fit remain in the queue for the next step. Any still waiting after the final step are reported as unscheduled.
-8. **Report results.** `report.py` prints an algorithm comparison and details for each run.
+5. **Continue existing work.** Running tasks use compute and energy for one work step. Tasks pause if their station is offline or cannot supply the needed resources; they resume when resources are available.
+6. **Find eligible stations for waiting tasks.** A task can be assigned only when a station has enough remaining compute and energy for one work step, and meets the task's minimum bandwidth.
+7. **Apply the scheduling rule.** The chosen algorithm selects one eligible station. The simulation subtracts one work step of compute and energy and records the assignment.
+8. **Try waiting tasks again.** Tasks that could not fit remain in the queue. Tasks are reported as completed, in progress, paused, or unscheduled when the run ends.
+9. **Present results.** `report.py` prints a comparison in the terminal. The browser dashboard uses the same step snapshots to show task progress.
 
 ## Data models
 
@@ -85,7 +100,7 @@ The models in `orbit/models.py` use Python `dataclass` declarations. A dataclass
 
 ### Task
 
-Each task has an ID, name, compute demand, priority, arrival step, data size, and minimum bandwidth. Larger priority values are scheduled first. Compute is charged against a station's per-step capacity and energy use.
+Each task has an ID, name, task type, compute demand per work step, duration in work steps, priority, arrival step, data size, and minimum bandwidth. Larger priority values are scheduled first. A compute-heavy task needs a station with more capacity; a long task uses compute and energy across more steps. A data-heavy task affects the communication-delay estimate.
 
 ### Station
 
@@ -97,7 +112,9 @@ An assignment records the task and station, the step at which it was scheduled, 
 
 ### RunResult
 
-A run result collects assignments, tasks that remained unscheduled, total energy used by station, and the number of outage steps each station experienced. The report uses these values to compare algorithms.
+A run result collects assignments, each task's final state, tasks that remained unscheduled, total energy used by station, and the number of outage steps each station experienced. The report uses these values to compare algorithms.
+
+It also contains a `StepSnapshot` for each simulation step. Each snapshot records station availability and resources, assignments, new arrivals, and waiting tasks. The dashboard uses these snapshots for playback.
 
 ## Scheduling strategies
 
@@ -133,9 +150,11 @@ A task entry looks like this:
 ```json
 {
   "task_id": "T-01",
-  "name": "Emergency weather scan",
-  "compute": 5,
-  "priority": 5,
+  "name": "Weather record lookup",
+  "task_type": "weather_lookup",
+  "compute": 1,
+  "duration_steps": 1,
+  "priority": 1,
   "arrival_step": 0,
   "data_size": 6,
   "min_bandwidth": 3
@@ -149,10 +168,10 @@ All values are intentionally small and abstract. `arrival_step` and each outage 
 The current version is a foundation for experiments, so its simplifications should be understood when presenting it:
 
 - Compute and energy are abstract values chosen for the scenario, not measured hardware units.
-- A task consumes its compute budget in one scheduling step. Task execution over multiple steps is not modeled yet.
-- Communication delay is estimated as station latency plus `ceil(data_size / bandwidth)`. It affects the estimated completion step, but does not reserve station resources while data is in transit.
-- An outage makes a station unavailable for assignment at the listed step. Recovery is automatic on later steps; running-task recovery is not modeled.
-- There is no orbital mechanics, real network topology, randomness, data persistence, or graphical dashboard yet.
+- `compute` is the capacity needed for each work step; `duration_steps` says how many successful work steps the task needs. The model does not simulate partial work within a step.
+- Communication delay is estimated as station latency plus `ceil(data_size / bandwidth)`. It affects the estimated completion time, but is not yet a real transfer phase and does not delay task execution.
+- An outage pauses running work at that station. Work resumes automatically when the station returns; retrying elsewhere or permanent failures are not modeled.
+- There is no orbital mechanics, real network topology, or data persistence. The dashboard visualizes the same simplified model used by the terminal simulator.
 
 These limits make the scheduling decisions visible and easier to explain while leaving a clear path to a more realistic model.
 
@@ -162,14 +181,14 @@ Automated tests are planned but are not included yet. Useful first cases include
 
 ## Development roadmap
 
-1. **Current foundation:** structured package, configurable scenario, time-step arrivals, priority ordering, compute/energy/bandwidth checks, outages, delay estimates, three scheduler choices, and reports.
-2. **Validation and tests:** add focused automated checks for resource limits and simulation lifecycle.
-3. **Task execution lifecycle:** track queued, transferring, running, completed, failed, and expired task states across steps.
-4. **Network model:** introduce links between stations, transfer contention, and route-dependent delays.
-5. **Failure and recovery behavior:** model task interruption, retry, reassignment, and recovery events.
+1. **Current foundation:** configurable typed workloads, multi-step task execution, resource checks, outages and pauses, three schedulers, terminal reports, and dashboard playback.
+2. **Validation and tests:** add focused automated checks for resource limits and task progress.
+3. **Network model:** make data transfers take time and compete for link bandwidth.
+4. **Failure and recovery behavior:** add failure durations, retry, reassignment, and recovery events.
+5. **More scheduling rules:** add Round Robin, Least Loaded, and deadline-aware strategies.
 6. **Experiment outputs:** save results as CSV/JSON and compare algorithms across repeatable scenarios.
-7. **Visual control center:** add charts and controls after the simulator behavior and outputs are stable.
+7. **Expand the control room:** add scenario editing and side-by-side algorithm charts.
 
 ## Presentation summary
 
-“ORBIT is a Python simulator for scheduling computing tasks across resource-limited orbital stations. Tasks arrive over time and carry a priority, compute demand, and communication requirement. Each station has compute, energy, bandwidth, and outage limits. I implemented three scheduling rules and compare their assignment, energy, and delay results using the same scenario. The current model is simplified: each task uses compute in one scheduling step, and communication delay is an estimate. The next step is tracking task execution and recovery across multiple steps.”
+“ORBIT is a Python simulator for scheduling different kinds of computing tasks across resource-limited orbital stations. Each task has its own compute demand and run duration, while stations have compute, energy, bandwidth, and outage limits. I compare three scheduling rules and visualize tasks as they wait, run, pause, and complete. Communication delay is still estimated; the next step is modeling real data transfers between stations.”

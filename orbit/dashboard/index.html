@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ORBIT Control Room</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070b13;
+      --panel: #101827;
+      --panel-light: #151f30;
+      --border: #253147;
+      --text: #edf4ff;
+      --muted: #91a0b7;
+      --cyan: #55d8eb;
+      --blue: #70a7ff;
+      --purple: #b594ff;
+      --green: #61e2ae;
+      --amber: #ffc66d;
+      --red: #ff7889;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% -20%, #14223a 0, var(--bg) 55%);
+      color: var(--text);
+      font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+    }
+
+    button, select, input { font: inherit; }
+    button, select {
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #131e2f;
+    }
+    button { cursor: pointer; padding: 9px 13px; }
+    button:hover, select:hover { border-color: #58708f; }
+    button:disabled { opacity: .45; cursor: default; }
+    select { padding: 9px 32px 9px 11px; }
+
+    .shell { max-width: 1420px; margin: 0 auto; padding: 24px 30px 28px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px;
+      color: var(--cyan); border: 1px solid #31526b; background: #102234; font-size: 21px;
+      box-shadow: 0 0 28px #4cd7eb22;
+    }
+    .eyebrow { color: var(--cyan); letter-spacing: .16em; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    h1 { margin: 2px 0 0; font-size: 20px; letter-spacing: .04em; }
+    .connection { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px #61e2ae; }
+
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
+    .scenario-label { color: var(--muted); font-size: 13px; }
+    .scenario-label strong { display: block; color: var(--text); font-size: 16px; font-weight: 600; }
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .primary { border-color: #24677a; background: #113a4a; color: #baf7ff; }
+    .primary:hover { background: #17495b; }
+    .icon-button { min-width: 40px; padding: 8px; font-size: 16px; }
+
+    .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 14px; }
+    .metric, .panel, .station-card { border: 1px solid var(--border); border-radius: 13px; background: linear-gradient(145deg, #121c2c, #0e1624); }
+    .metric { padding: 13px 16px; }
+    .metric-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; }
+    .metric-value { margin-top: 4px; font-size: 23px; font-weight: 650; }
+    .metric-value small { color: var(--muted); font-size: 12px; font-weight: 500; }
+
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, .8fr); gap: 14px; }
+    .panel { overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 17px; border-bottom: 1px solid var(--border); }
+    .panel-title { margin: 0; font-size: 13px; font-weight: 650; letter-spacing: .04em; }
+    .panel-kicker { color: var(--muted); font-size: 11px; }
+    .map {
+      position: relative; min-height: 330px; overflow: hidden;
+      background: radial-gradient(ellipse at center, #0e1b2d 0, #0b1320 55%, #0a111c 100%);
+    }
+    .map::before {
+      content: ""; position: absolute; inset: 0; opacity: .22;
+      background-image: radial-gradient(1px 1px at 9% 25%, #cce7ff 99%, transparent),
+        radial-gradient(1px 1px at 26% 74%, #cce7ff 99%, transparent),
+        radial-gradient(1px 1px at 74% 26%, #cce7ff 99%, transparent),
+        radial-gradient(1px 1px at 90% 70%, #cce7ff 99%, transparent),
+        radial-gradient(1px 1px at 62% 85%, #cce7ff 99%, transparent);
+    }
+    .orbit-ring { position: absolute; width: 66%; height: 72%; left: 17%; top: 14%; border: 1px dashed #41647d88; border-radius: 50%; transform: rotate(-13deg); }
+    .orbit-ring.second { width: 48%; height: 100%; left: 26%; top: 0; transform: rotate(55deg); border-color: #52618755; }
+    .earth {
+      position: absolute; width: 132px; height: 132px; left: 50%; top: 51%; transform: translate(-50%, -50%);
+      border: 2px solid #3e9fc7; border-radius: 50%;
+      background: radial-gradient(circle at 36% 29%, #52cae4 0, #1d6999 25%, #10365f 58%, #09192c 78%);
+      box-shadow: 0 0 0 10px #3585a819, 0 0 40px #37bbec44, inset -15px -12px 26px #020914a8;
+    }
+    .earth::before { content: ""; position: absolute; inset: 21px 19px; border-radius: 50%; border: 1px solid #9be9ef3e; transform: rotate(-25deg) scaleY(.58); }
+    .earth-label { position: absolute; left: 50%; top: calc(51% + 77px); transform: translateX(-50%); color: #9ab5d0; font-size: 9px; letter-spacing: .18em; }
+    .station-node {
+      position: absolute; z-index: 2; width: 150px; padding: 9px 11px; border: 1px solid #3b526c;
+      border-radius: 11px; background: #121e30ed; box-shadow: 0 8px 25px #0007;
+      transform: translate(-50%, -50%); transition: border-color .2s, box-shadow .2s, opacity .2s;
+    }
+    .station-node[data-index="0"] { left: 50%; top: 11%; }
+    .station-node[data-index="1"] { left: 17%; top: 76%; }
+    .station-node[data-index="2"] { left: 83%; top: 76%; }
+    .station-node.active { border-color: var(--cyan); box-shadow: 0 0 22px #55d8eb32; }
+    .station-node.offline { border-color: #8b4e5d; opacity: .7; }
+    .node-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .node-name { overflow: hidden; color: #e9f1ff; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .status-pill { flex: none; padding: 2px 6px; border-radius: 99px; color: var(--green); background: #143428; font-size: 9px; text-transform: uppercase; }
+    .offline .status-pill { color: var(--red); background: #3b1b28; }
+    .node-task { min-height: 14px; margin-top: 5px; overflow: hidden; color: var(--cyan); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .step-caption { position: absolute; right: 14px; bottom: 10px; color: #61718b; font-size: 10px; letter-spacing: .06em; }
+
+    .side-panel { display: flex; flex-direction: column; min-height: 330px; }
+    .step-chip { padding: 4px 8px; border: 1px solid #31435a; border-radius: 7px; color: var(--cyan); font-size: 11px; }
+    .event-list { flex: 1; padding: 6px 16px; overflow-y: auto; max-height: 285px; }
+    .event { display: grid; grid-template-columns: 9px 1fr; gap: 9px; padding: 11px 0; border-bottom: 1px solid #202c3d; color: #cfdaea; font-size: 12px; }
+    .event:last-child { border-bottom: 0; }
+    .event-dot { width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--cyan); }
+    .event.waiting .event-dot { background: var(--amber); }
+    .event.outage .event-dot { background: var(--red); }
+    .event strong { color: #f3f7ff; font-weight: 600; }
+    .empty-state { padding: 35px 12px; color: var(--muted); text-align: center; }
+
+    .station-section { margin-top: 14px; }
+    .station-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 13px; }
+    .station-card { padding: 13px; background: #101a29; }
+    .station-card.offline { border-color: #633747; }
+    .station-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 13px; }
+    .station-card h3 { margin: 0; font-size: 13px; }
+    .station-id { color: var(--muted); font-size: 10px; letter-spacing: .08em; }
+    .resource { margin-top: 10px; }
+    .resource-label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; color: var(--muted); font-size: 10px; }
+    .resource-label strong { color: #dfe9f7; font-weight: 550; }
+    .meter { height: 6px; overflow: hidden; border-radius: 10px; background: #202c3e; }
+    .meter-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #328daf, var(--cyan)); transition: width .35s; }
+    .meter-fill.energy { background: linear-gradient(90deg, #7e6add, var(--purple)); }
+    .station-card.offline .meter-fill { opacity: .35; }
+    .task-tags { display: flex; flex-wrap: wrap; gap: 5px; min-height: 20px; margin-top: 12px; }
+    .task-tag { padding: 3px 7px; border: 1px solid #286174; border-radius: 6px; color: #a9f1f9; background: #102b38; font-size: 9px; }
+    .no-task { color: #72819a; font-size: 10px; }
+
+    .playback { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; margin-top: 14px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 12px; background: #101827; }
+    .playback-buttons { display: flex; gap: 6px; }
+    .range-wrap { display: flex; align-items: center; gap: 11px; color: var(--muted); font-size: 11px; }
+    input[type="range"] { width: 100%; accent-color: var(--cyan); }
+    .step-readout { min-width: 62px; color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+    .footer-note { margin-top: 11px; color: #718099; font-size: 10px; text-align: right; }
+
+    @media (max-width: 900px) {
+      .shell { padding: 18px 16px; }
+      .main-grid { grid-template-columns: 1fr; }
+      .side-panel { min-height: 230px; }
+      .event-list { max-height: 200px; }
+      .map { min-height: 300px; }
+    }
+    @media (max-width: 620px) {
+      .topbar, .toolbar { align-items: flex-start; flex-direction: column; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .station-grid { grid-template-columns: 1fr; }
+      .playback { grid-template-columns: 1fr; }
+      .playback-buttons { justify-content: center; }
+      .station-node { width: 122px; padding: 7px; }
+      .station-node[data-index="1"] { left: 22%; }
+      .station-node[data-index="2"] { left: 78%; }
+      .earth { width: 105px; height: 105px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">◉</div>
+        <div><div class="eyebrow">Orbital computing network</div><h1>ORBIT CONTROL ROOM</h1></div>
+      </div>
+      <div class="connection"><span class="live-dot"></span> Local simulation connected</div>
+    </header>
+
+    <section class="toolbar">
+      <div class="scenario-label"><strong id="scenario-name">Loading scenario…</strong><span id="scenario-subtitle">Preparing station network</span></div>
+      <div class="controls">
+        <select id="algorithm" aria-label="Scheduling algorithm">
+          <option value="first_fit">First Fit</option>
+          <option value="best_fit" selected>Best Fit</option>
+          <option value="energy_aware">Energy Aware</option>
+        </select>
+        <button class="primary" id="run-button">Run scheduler</button>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Simulation summary">
+      <div class="metric"><div class="metric-label">Tasks scheduled</div><div class="metric-value" id="metric-scheduled">—</div></div>
+      <div class="metric"><div class="metric-label">Tasks completed</div><div class="metric-value" id="metric-completed">—</div></div>
+      <div class="metric"><div class="metric-label">Total energy used</div><div class="metric-value" id="metric-energy">—</div></div>
+      <div class="metric"><div class="metric-label">Avg. communication delay</div><div class="metric-value" id="metric-delay">—</div></div>
+      <div class="metric"><div class="metric-label">Current simulation step</div><div class="metric-value" id="metric-step">—</div></div>
+    </section>
+
+    <section class="main-grid">
+      <section class="panel">
+        <div class="panel-head"><h2 class="panel-title">ORBITAL NETWORK</h2><span class="panel-kicker" id="algorithm-label">Best Fit</span></div>
+        <div class="map" id="map">
+          <div class="orbit-ring"></div><div class="orbit-ring second"></div>
+          <div class="earth" aria-label="Earth"></div><div class="earth-label">EARTH</div>
+          <div id="station-nodes"></div>
+          <div class="step-caption" id="map-caption">Waiting for simulation</div>
+        </div>
+      </section>
+
+      <section class="panel side-panel">
+        <div class="panel-head"><h2 class="panel-title">STEP EVENTS</h2><span class="step-chip" id="step-chip">STEP —</span></div>
+        <div class="event-list" id="event-list"><div class="empty-state">Run the scheduler to see task and station events.</div></div>
+      </section>
+    </section>
+
+    <section class="panel station-section">
+      <div class="panel-head"><h2 class="panel-title">STATION RESOURCES</h2><span class="panel-kicker">Capacity and battery at the selected step</span></div>
+      <div class="station-grid" id="station-cards"></div>
+    </section>
+
+    <section class="playback" aria-label="Simulation playback controls">
+      <div class="playback-buttons">
+        <button class="icon-button" id="previous-button" title="Previous step" aria-label="Previous step">◀</button>
+        <button class="icon-button primary" id="play-button" title="Play" aria-label="Play">▶</button>
+        <button class="icon-button" id="next-button" title="Next step" aria-label="Next step">▶|</button>
+      </div>
+      <div class="range-wrap"><span>STEP 0</span><input id="step-slider" type="range" min="0" max="0" value="0" aria-label="Choose simulation step"><span id="last-step-label">STEP 0</span></div>
+      <div class="step-readout" id="step-readout">0 / 0</div>
+    </section>
+    <div class="footer-note">Tasks run for their configured work steps; communication delay is still an estimate.</div>
+  </main>
+
+  <script>
+    const elements = {
+      algorithm: document.querySelector("#algorithm"),
+      run: document.querySelector("#run-button"),
+      play: document.querySelector("#play-button"),
+      previous: document.querySelector("#previous-button"),
+      next: document.querySelector("#next-button"),
+      slider: document.querySelector("#step-slider"),
+    };
+    let simulation = null;
+    let currentStep = 0;
+    let playTimer = null;
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
+      })[character]);
+    }
+
+    async function loadSimulation() {
+      stopPlayback();
+      elements.run.disabled = true;
+      elements.run.textContent = "Running…";
+      try {
+        const response = await fetch(`/api/simulation?algorithm=${encodeURIComponent(elements.algorithm.value)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not load the simulation");
+        simulation = data;
+        currentStep = 0;
+        renderSummary();
+        renderStep();
+      } catch (error) {
+        document.querySelector("#event-list").innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+      } finally {
+        elements.run.disabled = false;
+        elements.run.textContent = "Run scheduler";
+      }
+    }
+
+    function renderSummary() {
+      const { scenario, run } = simulation;
+      const scheduled = run.assignments.length;
+      const total = scenario.tasks.length;
+      document.querySelector("#scenario-name").textContent = scenario.name;
+      document.querySelector("#scenario-subtitle").textContent = `${scenario.stations.length} stations · ${total} tasks · ${scenario.time_steps} simulation steps`;
+      document.querySelector("#metric-scheduled").innerHTML = `${scheduled}<small> / ${total}</small>`;
+      document.querySelector("#metric-completed").innerHTML = `${run.completed_count}<small> / ${total}</small>`;
+      document.querySelector("#metric-energy").innerHTML = `${run.energy_used.toFixed(1)}<small> units</small>`;
+      document.querySelector("#metric-delay").innerHTML = `${run.average_delay.toFixed(1)}<small> steps</small>`;
+      document.querySelector("#algorithm-label").textContent = run.algorithm_name;
+      elements.slider.min = "0";
+      elements.slider.max = String(Math.max(0, scenario.time_steps - 1));
+      document.querySelector("#last-step-label").textContent = `STEP ${scenario.time_steps - 1}`;
+      elements.previous.disabled = true;
+      elements.next.disabled = scenario.time_steps <= 1;
+    }
+
+    function renderStep() {
+      if (!simulation) return;
+      const { scenario, run } = simulation;
+      const snapshot = run.steps[currentStep];
+      if (!snapshot) return;
+      elements.slider.value = String(currentStep);
+      document.querySelector("#metric-step").innerHTML = `${currentStep}<small> / ${scenario.time_steps - 1}</small>`;
+      document.querySelector("#step-chip").textContent = `STEP ${currentStep}`;
+      document.querySelector("#step-readout").textContent = `${currentStep} / ${scenario.time_steps - 1}`;
+      document.querySelector("#map-caption").textContent = `SIMULATION STEP ${String(currentStep).padStart(2, "0")}`;
+      elements.previous.disabled = currentStep <= 0;
+      elements.next.disabled = currentStep >= scenario.time_steps - 1;
+
+      const taskById = Object.fromEntries(scenario.tasks.map((task) => [task.task_id, task]));
+      const taskStateById = Object.fromEntries(snapshot.task_states.map((task) => [task.task_id, task]));
+      const stationStates = snapshot.stations;
+
+      document.querySelector("#station-nodes").innerHTML = stationStates.map((station, index) => {
+        const visibleIds = [...new Set([...station.working_task_ids, ...station.assigned_task_ids])];
+        const assigned = visibleIds.map((id) => taskById[id]?.task_type).filter(Boolean);
+        const classNames = ["station-node", station.online ? "" : "offline", assigned.length ? "active" : ""].join(" ");
+        return `<div class="${classNames}" data-index="${index}">
+          <div class="node-top"><span class="node-name">${escapeHtml(station.name)}</span><span class="status-pill">${station.online ? "Online" : "Offline"}</span></div>
+          <div class="node-task">${assigned.length ? `↗ ${escapeHtml(assigned.join(", "))}` : station.online ? "No task this step" : "Outage event"}</div>
+        </div>`;
+      }).join("");
+
+      document.querySelector("#station-cards").innerHTML = stationStates.map((station) => {
+        const computePercent = station.compute_capacity ? 100 * station.compute_remaining / station.compute_capacity : 0;
+        const energyPercent = station.energy_capacity ? 100 * station.energy_remaining / station.energy_capacity : 0;
+        const visibleIds = [...new Set([...station.working_task_ids, ...station.assigned_task_ids])];
+        const tasks = visibleIds.map((id) => taskById[id]).filter(Boolean);
+        return `<article class="station-card ${station.online ? "" : "offline"}">
+          <div class="station-card-top"><div><h3>${escapeHtml(station.name)}</h3><span class="station-id">${escapeHtml(station.station_id)}</span></div><span class="status-pill">${station.online ? "Online" : "Offline"}</span></div>
+          <div class="resource"><div class="resource-label"><span>Compute remaining</span><strong>${station.online ? station.compute_remaining : 0} / ${station.compute_capacity}</strong></div><div class="meter"><div class="meter-fill" style="width:${station.online ? computePercent : 0}%"></div></div></div>
+          <div class="resource"><div class="resource-label"><span>Battery remaining</span><strong>${station.energy_remaining.toFixed(1)} / ${station.energy_capacity}</strong></div><div class="meter"><div class="meter-fill energy" style="width:${energyPercent}%"></div></div></div>
+          <div class="task-tags">${tasks.length ? tasks.map((task) => {
+            const state = taskStateById[task.task_id];
+            const status = state?.status || "scheduled";
+            const progress = status === "completed" ? "done" : `${state?.remaining_steps ?? task.duration_steps} step(s) left`;
+            return `<span class="task-tag">${escapeHtml(task.task_type)} · ${escapeHtml(status)} · ${escapeHtml(progress)}</span>`;
+          }).join("") : `<span class="no-task">No active task at this step</span>`}</div>
+        </article>`;
+      }).join("");
+
+      const eventList = [];
+      stationStates.filter((station) => !station.online).forEach((station) => {
+        eventList.push(`<div class="event outage"><span class="event-dot"></span><span><strong>${escapeHtml(station.name)}</strong> is offline for this step.</span></div>`);
+      });
+      const assignedThisStep = run.assignments.filter((item) => item.scheduled_step === currentStep);
+      const assignedNow = new Set(assignedThisStep.map((item) => item.task_id));
+      assignedThisStep.forEach((assignment) => {
+        eventList.push(`<div class="event"><span class="event-dot"></span><span><strong>${escapeHtml(assignment.task_name)}</strong> [${escapeHtml(assignment.task_type)}] assigned to ${escapeHtml(assignment.station_name)}. Compute ${assignment.task_id ? taskById[assignment.task_id].compute : "?"} for ${assignment.duration_steps} step(s); estimated completion: step ${assignment.estimated_completion_step}.</span></div>`);
+      });
+      snapshot.completed_task_ids.forEach((taskId) => {
+        const task = taskById[taskId];
+        if (task) eventList.push(`<div class="event"><span class="event-dot"></span><span><strong>${escapeHtml(task.name)}</strong> finished its required work.</span></div>`);
+      });
+      snapshot.task_states.filter((task) => task.status === "paused").forEach((taskState) => {
+        const task = taskById[taskState.task_id];
+        if (task) eventList.push(`<div class="event waiting"><span class="event-dot"></span><span><strong>${escapeHtml(task.task_type)}</strong> is paused; ${taskState.remaining_steps} work step(s) remain.</span></div>`);
+      });
+      snapshot.arrived_task_ids.forEach((taskId) => {
+        const task = taskById[taskId];
+        if (!task) return;
+        if (!assignedNow.has(taskId)) {
+          eventList.push(`<div class="event waiting"><span class="event-dot"></span><span><strong>${escapeHtml(task.name)}</strong> arrived and is waiting for resources.</span></div>`);
+        }
+      });
+      if (currentStep === scenario.time_steps - 1 && run.unassigned.length) {
+        run.unassigned.forEach((item) => {
+          eventList.push(`<div class="event waiting"><span class="event-dot"></span><span><strong>${escapeHtml(item.name)}</strong> remained unscheduled: ${escapeHtml(item.reason)}.</span></div>`);
+        });
+      }
+      if (eventList.length === 0) {
+        eventList.push(`<div class="event"><span class="event-dot"></span><span>No new arrivals or outages this step. Waiting tasks: ${snapshot.waiting_task_ids.length}.</span></div>`);
+      }
+      document.querySelector("#event-list").innerHTML = eventList.join("");
+    }
+
+    function stopPlayback() {
+      if (playTimer !== null) window.clearInterval(playTimer);
+      playTimer = null;
+      elements.play.textContent = "▶";
+      elements.play.title = "Play";
+      elements.play.setAttribute("aria-label", "Play");
+    }
+
+    function startPlayback() {
+      if (!simulation || currentStep >= simulation.scenario.time_steps - 1) currentStep = 0;
+      elements.play.textContent = "Ⅱ";
+      elements.play.title = "Pause";
+      elements.play.setAttribute("aria-label", "Pause");
+      renderStep();
+      playTimer = window.setInterval(() => {
+        if (currentStep >= simulation.scenario.time_steps - 1) {
+          stopPlayback();
+          return;
+        }
+        currentStep += 1;
+        renderStep();
+      }, 1000);
+    }
+
+    elements.run.addEventListener("click", loadSimulation);
+    elements.algorithm.addEventListener("change", loadSimulation);
+    elements.play.addEventListener("click", () => playTimer === null ? startPlayback() : stopPlayback());
+    elements.previous.addEventListener("click", () => { stopPlayback(); currentStep = Math.max(0, currentStep - 1); renderStep(); });
+    elements.next.addEventListener("click", () => { stopPlayback(); currentStep = Math.min(simulation.scenario.time_steps - 1, currentStep + 1); renderStep(); });
+    elements.slider.addEventListener("input", () => { stopPlayback(); currentStep = Number(elements.slider.value); renderStep(); });
+    loadSimulation();
+  </script>
+</body>
+</html>

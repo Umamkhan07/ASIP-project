@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from .algorithms import ALGORITHMS
+from .dashboard import serve_dashboard
 from .report import print_comparison, print_report
 from .scenario import load_scenario
 from .simulation import run_simulation
@@ -23,9 +24,24 @@ def main():
         default="compare",
         help="scheduler to use, or compare all schedulers",
     )
+    parser.add_argument(
+        "--dashboard",
+        action="store_true",
+        help="open the visual, step-by-step simulation in your browser",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="local dashboard port (default: 8000)",
+    )
     arguments = parser.parse_args()
 
     try:
+        if arguments.dashboard:
+            serve_dashboard(arguments.port, arguments.scenario)
+            return
+
         scenario = load_scenario(arguments.scenario)
         if arguments.algorithm == "compare":
             results = [
