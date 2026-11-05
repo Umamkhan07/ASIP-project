@@ -1,8 +1,8 @@
-# ORBIT — Orbital Computing Resource Scheduler
+# DCOS — Data Centre Operating System
 
-ORBIT is a Python simulation for experimenting with how a network of orbital computing stations handles incoming work. It includes a terminal simulator and a browser-based control room for watching tasks move through simulation steps.
+DCOS is an educational Python simulation for scheduling work across a network of orbital data-centre stations. It includes a terminal simulator and a browser-based control room for watching tasks move through simulation steps. Despite the name, this project is a simulator, not an operating system.
 
-> **Current status:** ORBIT has a multi-step command-line simulator and a local browser dashboard. Tasks now have explicit types and different compute demands, data sizes, priorities, and run durations. Work can continue across steps, pause during outages or resource shortages, and complete later. Values remain simplified educational units, not a physical satellite model.
+> **Current status:** DCOS has a multi-step command-line simulator and a local browser dashboard. Tasks have explicit types and different compute demands, data sizes, priorities, and run durations. Work can continue across steps, pause during outages or resource shortages, and complete later. Values remain simplified educational units, not a physical satellite model.
 
 ## What it can do now
 
@@ -19,7 +19,7 @@ ORBIT is a Python simulation for experimenting with how a network of orbital com
 - Report assigned and unassigned tasks, energy use, outage steps, and estimated communication delay.
 - Show a visual orbital network with station resource meters, step events, and playback controls.
 
-The original small `orbit_day1.py` exercise remains available as a standalone introduction to First Fit and Best Fit. The package version is the main project from this point forward.
+The original ORBIT-named `orbit_day1.py` exercise remains as a standalone introduction to First Fit and Best Fit. The DCOS package version is the main project from this point forward.
 
 ## Run it
 
@@ -57,12 +57,14 @@ To open the visual control room, run:
 python -m orbit --dashboard
 ```
 
-ORBIT starts a local-only web server and opens the dashboard in your browser. Keep the terminal open while using it; press **Ctrl+C** there to stop the server. Use the scheduler menu to switch algorithms and the playback controls to move through the time steps. If port 8000 is already in use, try `python -m orbit --dashboard --port 8001`.
+DCOS starts a local-only web server and opens the dashboard in your browser. Keep the terminal open while using it; press **Ctrl+C** there to stop the server. Use the scheduler menu to switch algorithms and the playback controls to move through the time steps. If port 8000 is already in use, try `python -m orbit --dashboard --port 8001`.
+
+The internal Python package and command remain named `orbit` in this update so existing VS Code commands continue to work. The product and dashboard are branded DCOS.
 
 ## Project structure
 
 ```text
-orbit-project/
+DCOS-project/
 ├── README.md                  # Project guide, status, and design notes
 ├── orbit_day1.py              # Standalone beginner First Fit / Best Fit example
 ├── orbit/                     # Implemented simulator package
@@ -191,4 +193,4 @@ Automated tests are planned but are not included yet. Useful first cases include
 
 ## Presentation summary
 
-“ORBIT is a Python simulator for scheduling different kinds of computing tasks across resource-limited orbital stations. Each task has its own compute demand and run duration, while stations have compute, energy, bandwidth, and outage limits. I compare three scheduling rules and visualize tasks as they wait, run, pause, and complete. Communication delay is still estimated; the next step is modeling real data transfers between stations.”
+“DCOS is a Python simulator for scheduling different kinds of computing tasks across resource-limited orbital data-centre stations. Each task has its own compute demand and run duration, while stations have compute, energy, bandwidth, and outage limits. I compare three scheduling rules and visualize tasks as they wait, run, pause, and complete. Communication delay is still estimated; the next step is modeling real data transfers between stations.”

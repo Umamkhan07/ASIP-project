@@ -1,3 +1,3 @@
-"""ORBIT orbital computing resource scheduler simulator."""
+"""DCOS orbital data-centre scheduling simulator."""
 
 __version__ = "0.1.0"

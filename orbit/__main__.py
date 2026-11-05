@@ -1,4 +1,4 @@
-"""Command-line entry point for ORBIT."""
+"""Command-line entry point for the DCOS simulator."""
 
 import argparse
 from pathlib import Path
@@ -12,7 +12,7 @@ from .simulation import run_simulation
 
 def main():
     default_scenario = Path(__file__).resolve().parent.parent / "scenarios" / "default.json"
-    parser = argparse.ArgumentParser(description="Simulate orbital computing task scheduling.")
+    parser = argparse.ArgumentParser(description="Simulate DCOS orbital data-centre task scheduling.")
     parser.add_argument(
         "--scenario",
         default=str(default_scenario),

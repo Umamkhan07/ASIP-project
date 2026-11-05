@@ -60,7 +60,7 @@ def print_report(result, task_count):
 
 
 def print_comparison(results, task_count):
-    print(f"ORBIT simulation comparison: {results[0].scenario_name}")
+    print(f"DCOS simulation comparison: {results[0].scenario_name}")
     print("Tasks are prioritized; stations have compute, energy, bandwidth, and outage limits.")
     print(f"Simulation length: {results[0].time_steps} steps")
     print("\nAlgorithm          Scheduled    Completed    Energy used    Avg. comm. delay")

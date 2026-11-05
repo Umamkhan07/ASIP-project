@@ -118,11 +118,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def log_message(self, format_string, *args):
-        print(f"[ORBIT dashboard] {format_string % args}")
+        print(f"[DCOS dashboard] {format_string % args}")
 
 
 def serve_dashboard(port=8000, scenario_path=DEFAULT_SCENARIO):
-    """Open ORBIT's local dashboard and serve it until stopped by the user."""
+    """Open DCOS's local dashboard and serve it until stopped by the user."""
     if not 1 <= port <= 65535:
         raise ValueError("Dashboard port must be between 1 and 65535")
 
@@ -133,13 +133,13 @@ def serve_dashboard(port=8000, scenario_path=DEFAULT_SCENARIO):
 
     server.scenario_path = Path(scenario_path).resolve()
     address = f"http://127.0.0.1:{port}"
-    print(f"ORBIT dashboard is running at {address}")
+    print(f"DCOS dashboard is running at {address}")
     print("Keep this terminal open while using the dashboard. Press Ctrl+C to stop it.")
     webbrowser.open(address)
 
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nORBIT dashboard stopped.")
+        print("\nDCOS dashboard stopped.")
     finally:
         server.server_close()

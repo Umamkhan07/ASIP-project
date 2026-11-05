@@ -1,4 +1,4 @@
-"""ORBIT Day 1: a small orbital computing scheduler simulation.
+"""Legacy ORBIT Day 1 exercise: a small orbital computing scheduler demo.
 
 This program compares two simple ways to assign computing tasks to stations.
 All capacities are imaginary work units, not real satellite measurements.
@@ -106,7 +106,7 @@ def print_report(algorithm_name, stations, assignments, unassigned_tasks):
 
 def main():
     """Ask which scheduling rule to use, then run the simulation."""
-    print("ORBIT - Orbital Computing Resource Scheduler")
+    print("DCOS - Data Centre Operating System (Day 1 scheduling demo)")
     print("This small demo assigns tasks while respecting station capacity.")
     print("\nChoose a scheduling algorithm:")
     print("  1. First Fit - use the first station where the task fits")

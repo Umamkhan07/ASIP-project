@@ -1,4 +1,4 @@
-"""Small data models used by the ORBIT simulation."""
+"""Small data models used by the DCOS simulation."""
 
 from dataclasses import dataclass, field
 
